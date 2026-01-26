@@ -1,9 +1,11 @@
 #!/usr/bin/env -S deno run --allow-net --allow-read --allow-write --allow-run --allow-env
 
 import { load } from "jsr:@std/dotenv@^0.221.0";
-import { generateState, openBrowser, parseFragment } from "./utils.ts";
+import { generateState, openBrowser, parseFragment } from "../utils.ts";
 
-const env = await load();
+const env = await load({
+  envPath: "../.env",
+});
 const clientId = env["TWITCH_CLIENT_ID"];
 const state = generateState();
 const authUrl = `https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=${clientId}&redirect_uri=http://localhost:3000&scope=chat%3Aread%20chat%3Aedit&state=${state}`;
@@ -24,13 +26,13 @@ const server = Deno.serve({
   
     
     if (body.access_token) {
-      const token = `oauth:${body.access_token}`;
-      const envContent = await Deno.readTextFile(".env");
+      const token = body.access_token;
+      const envContent = await Deno.readTextFile("../.env");
       const updated = envContent.includes("TWITCH_OAUTH_TOKEN")
         ? envContent.replace(/TWITCH_OAUTH_TOKEN=.*/g, `TWITCH_OAUTH_TOKEN=${token}`)
         : `${envContent.trim()}\nTWITCH_OAUTH_TOKEN=${token}\n`;
       
-      await Deno.writeTextFile(".env", updated);
+      await Deno.writeTextFile("../.env", updated);
       
       setTimeout(() => {
         server.shutdown();
