@@ -8,7 +8,7 @@ const env = await load({
 });
 const clientId = env["TWITCH_CLIENT_ID"];
 const state = generateState();
-const authUrl = `https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=${clientId}&redirect_uri=http://localhost:3000&scope=chat%3Aread%20chat%3Aedit&state=${state}`;
+const authUrl = `https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=${clientId}&redirect_uri=http://localhost:3000&scope=chat%3Aread%20chat%3Aedit%20user%3Aread%3Afollows&state=${state}`;
 
 const callbackHtml = await Deno.readTextFile("callback.html");
 
