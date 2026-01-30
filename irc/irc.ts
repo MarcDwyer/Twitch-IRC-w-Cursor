@@ -1,6 +1,5 @@
-#!/usr/bin/env -S deno run --allow-net --allow-read --allow-env
+#!/usr/bin/env -S deno run --allow-net
 
-import { load } from "jsr:@std/dotenv@^0.221.0";
 import { Channel } from "./channel.ts";
 
 export class TwitchIRC {
@@ -10,24 +9,24 @@ export class TwitchIRC {
   private pendingActions: Map<string, (value?: any) => void> = new Map();
   public channels: Map<string, Channel> = new Map();
 
-  constructor(token: string, username: string) {
-    this.oauthToken = token.startsWith("oauth:") ? token : `oauth:${token}`;
+  constructor(oauthToken: string, username: string) {
+    this.oauthToken = oauthToken;
     this.username = username;
   }
 
   connect(): Promise<void> {
     return new Promise((resolve) => {
       this.pendingActions.set("auth", resolve);
-      
-      this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
 
+      const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+      this.ws = ws;
       this.ws.onopen = () => {
         console.log("Connected to Twitch IRC");
         this.authenticate();
       };
 
       this.ws.onmessage = (event) => {
-        this.handleMessage(event.data);
+        this.handleMessage(event.data, ws);
       };
 
       this.ws.onerror = (error) => {
@@ -42,16 +41,14 @@ export class TwitchIRC {
 
   private authenticate(): void {
     if (!this.ws) return;
-    
-    this.ws.send(`PASS ${this.oauthToken}`);
+
+    this.ws.send(`PASS oauth:${this.oauthToken}`);
     this.ws.send(`NICK ${this.username}`);
   }
 
-  private handleMessage(data: string): void {
-    console.log("Received:", data);
-
+  private handleMessage(data: string, ws: WebSocket): void {
     if (data.startsWith("PING")) {
-      this.ws?.send("PONG :tmi.twitch.tv");
+      ws.send("PONG :tmi.twitch.tv");
       return;
     }
 
@@ -68,12 +65,12 @@ export class TwitchIRC {
       const match = data.match(/:(\w+)!\w+@\w+\.tmi\.twitch\.tv JOIN (#\w+)/);
       if (match) {
         const [, username, channelName] = match;
-        
+
         // Check if this is our own join (initial connection)
         const resolver = this.pendingActions.get(channelName);
-        if (resolver && this.ws) {
+        if (resolver) {
           console.log(`Successfully joined ${channelName}`);
-          const channel = new Channel(this.ws, channelName);
+          const channel = new Channel(ws, channelName);
           this.channels.set(channelName, channel);
           resolver(channel);
           this.pendingActions.delete(channelName);
@@ -82,12 +79,27 @@ export class TwitchIRC {
     }
 
     if (data.includes("PRIVMSG")) {
-      const match = data.match(/:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG (#\w+) :(.+)/);
+      const match = data.match(
+        /:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG (#\w+) :(.+)/,
+      );
       if (match) {
         const [, username, channelName, content] = match;
         const channel = this.channels.get(channelName);
         if (channel) {
-          channel.dispatchEvent("message", { username, content, channel: channelName });
+          channel.dispatchEvent("PRIVMSG", {
+            username,
+            content,
+            channel: channelName,
+          });
+          // Dispatch MENTIONS when the bot's username appears in the message (case-insensitive)
+          if (content.toLowerCase().includes(this.username.toLowerCase())) {
+            channel.dispatchEvent("MENTIONS", {
+              username,
+              mentionedUsername: this.username,
+              content,
+              channel: channelName,
+            });
+          }
         }
       }
     }
@@ -111,7 +123,7 @@ export class TwitchIRC {
             const [key, value] = tag.split("=");
             if (key && value) tagMap[key] = value;
           });
-          channel.dispatchEvent("usernotice", {
+          channel.dispatchEvent("USERNOTICE", {
             username: tagMap["login"] || "",
             channel: channelName,
             messageType: tagMap["msg-id"] || "",
@@ -122,13 +134,15 @@ export class TwitchIRC {
     }
 
     if (data.includes("CLEARCHAT")) {
-      const match = data.match(/@?([^\s]*) :tmi\.twitch\.tv CLEARCHAT (#\w+)(?: :(\w+))?/);
+      const match = data.match(
+        /@?([^\s]*) :tmi\.twitch\.tv CLEARCHAT (#\w+)(?: :(\w+))?/,
+      );
       if (match) {
         const [, tags, channelName, username] = match;
         const channel = this.channels.get(channelName);
         if (channel) {
           const duration = tags.match(/ban-duration=(\d+)/)?.[1];
-          channel.dispatchEvent("clearchat", {
+          channel.dispatchEvent("CLEARCHAT", {
             channel: channelName,
             username,
             duration: duration ? parseInt(duration) : undefined,
@@ -148,7 +162,10 @@ export class TwitchIRC {
             const [key, value] = tag.split("=");
             if (key && value) tagMap[key] = value;
           });
-          channel.dispatchEvent("roomstate", { channel: channelName, tags: tagMap });
+          channel.dispatchEvent("ROOMSTATE", {
+            channel: channelName,
+            tags: tagMap,
+          });
         }
       }
     }
@@ -159,44 +176,33 @@ export class TwitchIRC {
         const [, channelName, message] = match;
         const channel = this.channels.get(channelName);
         if (channel) {
-          channel.dispatchEvent("notice", { channel: channelName, message });
+          channel.dispatchEvent("NOTICE", { channel: channelName, message });
         }
       }
     }
   }
 
   join(channel: string): Promise<Channel> {
+    channel = channel.toLowerCase();
     return new Promise((resolve) => {
       if (!this.ws) {
-        resolve(new Channel(this.ws!, channel));
         return;
       }
-      
+
       const channelName = channel.startsWith("#") ? channel : `#${channel}`;
       this.pendingActions.set(channelName, resolve);
       this.ws.send(`JOIN ${channelName}`);
       console.log(`Joining ${channelName}`);
     });
   }
+
+  disconnect(): void {
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+    this.channels.clear();
+    this.pendingActions.clear();
+    console.log("Disconnected from Twitch IRC");
+  }
 }
-
-const env = await load({ envPath: "../.env" });
-const token = env["TWITCH_OAUTH_TOKEN"];
-
-if (!token) {
-  console.error("TWITCH_OAUTH_TOKEN not found in .env file");
-  Deno.exit(1);
-}
-
-const irc = new TwitchIRC(token, "roystang_");
-await irc.connect();
-const channel = await irc.join("roystang_");
-console.log("Joined channel:", channel.name);
-
-channel.addEventListener("message", (data) => {
-  console.log(`${data.username}: ${data.content}`);
-});
-
-channel.addEventListener("usernotice", (data) => {
-  console.log(`[${data.messageType}] ${data.username}: ${data.message}`);
-});

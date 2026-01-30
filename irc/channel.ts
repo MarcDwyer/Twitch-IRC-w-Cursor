@@ -38,14 +38,22 @@ export interface NoticeEvent {
   messageId?: string;
 }
 
+export interface MentionEvent {
+  username: string; // The user who sent the message
+  mentionedUsername: string; // The username that was mentioned (e.g., the bot's username)
+  content: string; // The full message content
+  channel: string;
+}
+
 export type ChannelEventMap = {
-  message: MessageEvent;
-  usernotice: UserNoticeEvent;
-  clearchat: ClearChatEvent;
-  clearmsg: ClearMsgEvent;
-  roomstate: RoomStateEvent;
-  userstate: UserStateEvent;
-  notice: NoticeEvent;
+  PRIVMSG: MessageEvent;
+  USERNOTICE: UserNoticeEvent;
+  CLEARCHAT: ClearChatEvent;
+  CLEARMSG: ClearMsgEvent;
+  ROOMSTATE: RoomStateEvent;
+  USERSTATE: UserStateEvent;
+  NOTICE: NoticeEvent;
+  MENTIONS: MentionEvent; // Add the new event
 };
 
 export type ChannelEventType = keyof ChannelEventMap;
@@ -62,6 +70,10 @@ export class Channel {
 
   send(message: string): void {
     this.ws.send(`PRIVMSG ${this.name} :${message}`);
+  }
+
+  part(): void {
+    this.ws.send(`PART ${this.name}`);  
   }
 
   addEventListener<K extends ChannelEventType>(
