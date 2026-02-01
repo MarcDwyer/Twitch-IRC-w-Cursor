@@ -1,12 +1,10 @@
 import { useState } from "react";
+import { useCredentialsActions } from "../context/credentials.tsx";
 
-interface LoginPageProps {
-  onLogin: (clientId: string) => void;
-}
-
-function LoginPage({ onLogin }: LoginPageProps) {
+export function ClientIDPage() {
   const [clientId, setClientId] = useState("");
   const [error, setError] = useState("");
+  const { setClientID } = useCredentialsActions();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +21,7 @@ function LoginPage({ onLogin }: LoginPageProps) {
     }
 
     setError("");
-    onLogin(clientId.trim());
+    setClientID(clientId);
   };
 
   return (
@@ -93,5 +91,3 @@ function LoginPage({ onLogin }: LoginPageProps) {
     </div>
   );
 }
-
-export default LoginPage;
