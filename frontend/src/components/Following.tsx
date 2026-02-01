@@ -1,37 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
-import { createTwitchAPI, TwitchAPI } from "../lib/twitch_api/twitch_api.ts";
-import { Stream } from "../lib/twitch_api/twitch_api_types.ts";
-import { useCredentials } from "../context/credentials.tsx";
-
-function useFollowing(clientID: string, token: string) {
-  const [following, setFollowing] = useState<Stream[] | null>(null);
-  const [twitchAPI, setTwitchAPI] = useState<TwitchAPI | null>(null);
-
-  useEffect(() => {
-    if (!twitchAPI) {
-      createTwitchAPI(clientID, token).then((api) => setTwitchAPI(api));
-    }
-  }, [clientID, token, setTwitchAPI, twitchAPI]);
-
-  useEffect(() => {
-    if (!following && twitchAPI) {
-      twitchAPI
-        .getLiveFollowedChannels()
-        .then((resp) => setFollowing(resp.data));
-    }
-  }, [following, twitchAPI]);
-
-  return { twitchAPI, following };
-}
+import { useState } from "react";
+import { useFollowing } from "../hooks/useFollowing.ts";
 
 export function Following() {
-  const credentials = useCredentials();
   const [isVisible, setIsVisible] = useState(true);
 
-  const { following } = useFollowing(
-    credentials.clientID as string,
-    credentials.oauth.token as string,
-  );
+  const { following } = useFollowing(5);
 
   return (
     <div>
@@ -47,7 +20,7 @@ export function Following() {
         </button>
       </div>
       {isVisible && (
-        <div className="max-h-[576px] overflow-y-auto pr-2">
+        <div className="max-h-144 overflow-y-auto pr-2">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {following &&
               following.length > 0 &&
