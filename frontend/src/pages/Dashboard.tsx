@@ -2,11 +2,11 @@ import BlurredText from "../components/BlurredText.tsx";
 import { CopyButton } from "../components/CopyButton.tsx";
 import { Following } from "../components/Following.tsx";
 import { LogoutBtn } from "../components/LogoutBtn.tsx";
-import { useCredentials } from "../context/credentials.tsx";
+import { useTwitchCtx } from "../context/twitchctx.tsx";
 import { useOAuth } from "../hooks/useOAuth.ts";
 
 export function Dashboard() {
-  const credentials = useCredentials();
+  const twitch = useTwitchCtx();
   const { oauth } = useOAuth();
   return (
     <div className="min-h-screen flex flex-col bg-zinc-900">
@@ -21,8 +21,8 @@ export function Dashboard() {
               Welcome to your Dashboard
             </h2>
             <p className="text-zinc-400 flex items-center gap-2">
-              Client ID: <BlurredText text={credentials.clientID ?? ""} />
-              <CopyButton text={credentials.clientID ?? ""} />
+              Client ID: <BlurredText text={twitch.clientID ?? ""} />
+              <CopyButton text={twitch.clientID ?? ""} />
             </p>
             <p className="text-zinc-400 mt-2 flex items-center gap-2">
               OAuth Token: <BlurredText text={oauth.token ?? ""} />

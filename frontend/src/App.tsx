@@ -1,14 +1,20 @@
 import { Dashboard } from "./pages/Dashboard.tsx";
-import { useCredentials } from "./context/credentials.tsx";
+import { useTwitchCtx } from "./context/twitchctx.tsx";
 import { ClientIDPage } from "./pages/ClientID.tsx";
 import { OAuthPage } from "./pages/OAuth.tsx";
+import { useTwitchAPI } from "./hooks/useTwitchAPI.ts";
 
 function App() {
-  const credentials = useCredentials();
-  if (!credentials.clientID) {
+  const twitch = useTwitchCtx();
+
+  // for it's useEffect to initialize TwitchAPI once
+  // a clientID and token is detected
+  useTwitchAPI();
+
+  if (!twitch.clientID) {
     return <ClientIDPage />;
   }
-  if (credentials.clientID && !credentials.oauth.validated) {
+  if (twitch.clientID && !twitch.oauth.validated) {
     return <OAuthPage />;
   }
 

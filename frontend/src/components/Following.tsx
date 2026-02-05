@@ -4,7 +4,7 @@ import { useFollowing } from "../hooks/useFollowing.ts";
 export function Following() {
   const [isVisible, setIsVisible] = useState(true);
 
-  const { following } = useFollowing(5);
+  const following = useFollowing();
 
   return (
     <div>

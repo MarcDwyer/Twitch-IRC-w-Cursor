@@ -1,13 +1,9 @@
-import { useContext } from "react";
-import { CredentialsContext, OAuth } from "../context/credentials.tsx";
+import { OAuth, useTwitchCtx } from "../context/twitchctx.tsx";
 import { checkTokenForValidation } from "../lib/oauth.ts";
 import { OAUTH_KEY } from "../util/storageKeys.ts";
 
 export const useOAuth = () => {
-  const {
-    credentials: { oauth },
-    setCredentials,
-  } = useContext(CredentialsContext);
+  const { oauth, _setOAuth } = useTwitchCtx();
 
   const checkURLForToken = () => {
     const hash = location.hash.substring(1);
@@ -32,10 +28,10 @@ export const useOAuth = () => {
     }
   };
 
-  const setOAuth = (oauth: Partial<OAuth>) =>
-    setCredentials((prev) => ({
+  const setOAuth = (newOAuth: Partial<OAuth>) =>
+    _setOAuth((prev) => ({
       ...prev,
-      oauth: { ...prev.oauth, ...oauth },
+      ...newOAuth,
     }));
 
   return {

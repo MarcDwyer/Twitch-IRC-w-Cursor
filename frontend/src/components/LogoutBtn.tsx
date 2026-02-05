@@ -1,7 +1,7 @@
-import { useCredentialsActions } from "../context/credentials.tsx";
+import { useTwitchCtxActions } from "../context/twitchctx.tsx";
 
 export function LogoutBtn() {
-  const { logout } = useCredentialsActions();
+  const { logout } = useTwitchCtxActions();
 
   return (
     <button

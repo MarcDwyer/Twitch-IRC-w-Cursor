@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useCredentials } from "../context/credentials.tsx";
+import { useTwitchCtx } from "../context/twitchctx.tsx";
 import { useOAuth } from "../hooks/useOAuth.ts";
 
 const REDIRECT_URI = "http://localhost:5173/oauth/callback";
@@ -14,7 +14,7 @@ function generateState(): string {
 }
 
 export function OAuthPage() {
-  const { clientID } = useCredentials();
+  const { clientID } = useTwitchCtx();
   const { oauth, checkURLForToken, validateToken } = useOAuth();
 
   useEffect(() => {

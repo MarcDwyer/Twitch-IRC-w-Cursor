@@ -1,24 +1,24 @@
-import { useCallback, useContext } from "react";
-import { CredentialsContext } from "../context/credentials.tsx";
+import { useCallback } from "react";
+import { useTwitchCtx } from "../context/twitchctx.tsx";
 import { CLIENT_ID_KEY } from "../util/storageKeys.ts";
 
 export const useClientID = () => {
-  const { credentials, setCredentials } = useContext(CredentialsContext);
+  const { clientID, _setClientID } = useTwitchCtx();
 
   const setClientID = useCallback(
-    (clientID: string | null) => {
-      if (clientID) {
-        localStorage.setItem(CLIENT_ID_KEY, clientID);
+    (newClientID: string | null) => {
+      if (newClientID) {
+        localStorage.setItem(CLIENT_ID_KEY, newClientID);
       } else {
         localStorage.removeItem(CLIENT_ID_KEY);
       }
-      setCredentials((prevState) => ({ ...prevState, clientID }));
+      _setClientID(newClientID);
     },
-    [setCredentials],
+    [_setClientID],
   );
 
   return {
-    clientID: credentials.clientID,
+    clientID,
     setClientID,
   };
 };
