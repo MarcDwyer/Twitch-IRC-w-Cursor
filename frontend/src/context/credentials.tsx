@@ -1,16 +1,12 @@
 import {
   createContext,
-  useState,
   Dispatch,
+  ReactNode,
   SetStateAction,
   useContext,
-  useCallback,
+  useState,
 } from "react";
-
-import { checkTokenForValidation } from "../lib/oauth.ts";
-
-const CLIENT_ID_KEY = "twitch_client_id";
-const OAUTH_KEY = "twitch_oauth";
+import { CLIENT_ID_KEY, OAUTH_KEY } from "../util/storageKeys.ts";
 
 export type OAuth = {
   token: string | null;
@@ -44,7 +40,7 @@ export const CredentialsContext = createContext<CredentialsContextType>({
 export const CredentialsProvider = ({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) => {
   const [credentials, setCredentials] = useState<CredentialsState>(
     InitialCredentialsState,
@@ -65,18 +61,6 @@ export const useCredentials = () => {
 export const useCredentialsActions = () => {
   const { setCredentials } = useContext(CredentialsContext);
 
-  const setClientID = useCallback(
-    (clientID: string | null) => {
-      if (clientID) {
-        localStorage.setItem(CLIENT_ID_KEY, clientID);
-      } else {
-        localStorage.removeItem(CLIENT_ID_KEY);
-      }
-      setCredentials((prevState) => ({ ...prevState, clientID }));
-    },
-    [setCredentials],
-  );
-
   const logout = () => {
     localStorage.removeItem(OAUTH_KEY);
     localStorage.removeItem(CLIENT_ID_KEY);
@@ -86,54 +70,7 @@ export const useCredentialsActions = () => {
     });
   };
 
-  const setOAuth = (oauth: Partial<OAuth>) =>
-    setCredentials((prev) => ({
-      ...prev,
-      oauth: { ...prev.oauth, ...oauth },
-    }));
-
   return {
-    setClientID,
     logout,
-    setOAuth,
-  };
-};
-export const useOAuth = () => {
-  const {
-    credentials: { oauth },
-  } = useContext(CredentialsContext);
-  return oauth;
-};
-export const useOAuthActions = () => {
-  const {
-    credentials: { oauth },
-  } = useContext(CredentialsContext);
-  const { setOAuth } = useCredentialsActions();
-
-  const checkURLForToken = () => {
-    const hash = location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-    const accessToken = params.get("access_token");
-    setOAuth({ token: accessToken });
-  };
-  const validateToken = async () => {
-    console.log({ oauth });
-    if (!oauth.token) {
-      return;
-    }
-    const isValid = await checkTokenForValidation(oauth.token);
-    console.log({ isValid });
-    if (isValid) {
-      localStorage.setItem(OAUTH_KEY, oauth.token);
-      setOAuth({ validated: isValid });
-    } else {
-      localStorage.removeItem(OAUTH_KEY);
-      setOAuth({ validated: false, token: null });
-    }
-  };
-
-  return {
-    validateToken,
-    checkURLForToken,
   };
 };

@@ -17,26 +17,13 @@ Built with modern web technologies and designed for extensibility to support add
 The project is structured as a full-stack application with the following components:
 
 ### Backend (`/backend`)
-- **Server**: `server.ts` - Main backend server handling API requests and IRC connections
-- Manages Twitch IRC connections
-- Handles authentication and user sessions
-- Provides REST API for frontend communication
+- **Server**: `server.ts` - This doesn't do anything atm.
 
 ### Frontend (`/frontend`)
 - Modern web UI built with Vite
 - Real-time chat interface
 - Channel tracking dashboard
 - Responsive design for desktop and mobile
-
-### IRC Module (`/irc`)
-- Handles Twitch IRC protocol implementation
-- Manages chat message parsing and formatting
-- Connection management and reconnection logic
-
-### OAuth (`/oauth`)
-- Twitch OAuth integration
-- User authentication flow
-- Token management and refresh
 
 ## Features
 
@@ -64,15 +51,9 @@ The project is structured as a full-stack application with the following compone
 
 ### Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/Twitch-IRC-w-Cursor.git
-   cd Twitch-IRC-w-Cursor
-   ```
+1. Set up your Twitch OAuth credentials (see `README_TOKEN.md` for details)
 
-2. Set up your Twitch OAuth credentials (see `README_TOKEN.md` for details)
-
-3. Install dependencies and start the development server:
+2. Install dependencies and start the development server:
    ```bash
    deno task dev
    ```
@@ -101,10 +82,6 @@ Before running the application, you'll need to configure your Twitch OAuth crede
 
 - `deno run main.ts` - Start the main application
 - Frontend development server available in `/frontend` directory
-
-## Contributing
-
-Contributions are welcome! This project is designed to be extensible, so feel free to propose new features or improvements.
 
 ## Future Roadmap
 

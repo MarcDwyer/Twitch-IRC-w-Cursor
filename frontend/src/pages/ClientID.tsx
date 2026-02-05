@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useCredentialsActions } from "../context/credentials.tsx";
+import { useClientID } from "../hooks/useClientID.ts";
 
 export function ClientIDPage() {
   const [clientId, setClientId] = useState("");
   const [error, setError] = useState("");
-  const { setClientID } = useCredentialsActions();
-
+  const { setClientID } = useClientID();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -63,9 +62,8 @@ export function ClientIDPage() {
               autoComplete="off"
               className="px-4 py-3 rounded-md border-2 border-zinc-700 bg-zinc-950 text-zinc-100 text-base placeholder-zinc-500 transition-colors duration-200 focus:outline-none focus:border-purple-500"
             />
-            {error && (
-              <span className="text-red-400 text-sm mt-1">{error}</span>
-            )}
+            {error && <span className="text-red-400 text-sm mt-1">{error}
+            </span>}
           </div>
 
           <button

@@ -5,7 +5,6 @@ import { OAuthPage } from "./pages/OAuth.tsx";
 
 function App() {
   const credentials = useCredentials();
-  console.log({ credentials });
   if (!credentials.clientID) {
     return <ClientIDPage />;
   }

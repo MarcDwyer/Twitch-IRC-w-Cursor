@@ -2,11 +2,12 @@ import BlurredText from "../components/BlurredText.tsx";
 import { CopyButton } from "../components/CopyButton.tsx";
 import { Following } from "../components/Following.tsx";
 import { LogoutBtn } from "../components/LogoutBtn.tsx";
-import { useCredentials, useOAuth } from "../context/credentials.tsx";
+import { useCredentials } from "../context/credentials.tsx";
+import { useOAuth } from "../hooks/useOAuth.ts";
 
 export function Dashboard() {
   const credentials = useCredentials();
-  const oauth = useOAuth();
+  const { oauth } = useOAuth();
   return (
     <div className="min-h-screen flex flex-col bg-zinc-900">
       <header className="flex justify-between items-center px-8 py-4 bg-zinc-800 border-b border-zinc-700">

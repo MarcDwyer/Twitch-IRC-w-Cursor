@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { useCredentials, useOAuthActions } from "../context/credentials.tsx";
+import { useEffect } from "react";
+import { useCredentials } from "../context/credentials.tsx";
+import { useOAuth } from "../hooks/useOAuth.ts";
 
 const REDIRECT_URI = "http://localhost:5173/oauth/callback";
 const SCOPES = ["chat:read", "chat:edit", "user:read:follows"];
@@ -13,9 +14,8 @@ function generateState(): string {
 }
 
 export function OAuthPage() {
-  const { oauth, clientID } = useCredentials();
-
-  const { checkURLForToken, validateToken } = useOAuthActions();
+  const { clientID } = useCredentials();
+  const { oauth, checkURLForToken, validateToken } = useOAuth();
 
   useEffect(() => {
     if (!oauth.token) {
@@ -41,7 +41,8 @@ export function OAuthPage() {
       state: state,
     });
 
-    const authUrl = `https://id.twitch.tv/oauth2/authorize?${params.toString()}`;
+    const authUrl =
+      `https://id.twitch.tv/oauth2/authorize?${params.toString()}`;
     location.href = authUrl;
   };
 
