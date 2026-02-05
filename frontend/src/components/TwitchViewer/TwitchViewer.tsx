@@ -6,7 +6,7 @@ import { Channel, ChatMessageEvent } from "../../lib/irc/channel.ts";
 import { Chat } from "../Chat.tsx";
 import { useTwitchAPI } from "../../hooks/useTwitchAPI.ts";
 
-import "./Joined.css";
+import "./TwitchViewer.css";
 
 type Props = {
   stream: Stream;
@@ -15,7 +15,9 @@ type Props = {
   close: (stream: Stream) => void;
 };
 
-export function Joined({ stream, twitchIRC, connectionState, close }: Props) {
+export function TwitchViewer(
+  { stream, twitchIRC, connectionState, close }: Props,
+) {
   const [messages, setMessages] = useState<ChatMessageEvent[]>([]);
   const [channel, setChannel] = useState<Channel | null>(null);
   const twitchAPI = useTwitchAPI();
@@ -58,7 +60,7 @@ export function Joined({ stream, twitchIRC, connectionState, close }: Props) {
   }, [channel]);
 
   return (
-    <div className="joined-container bg-zinc-800 rounded-lg border border-zinc-700">
+    <div className="twitch-viewer-container bg-zinc-800 rounded-lg border border-zinc-700">
       <div className="relative w-full aspect-video">
         <iframe
           src={embedUrl}

@@ -1,7 +1,7 @@
 import { useFollowing } from "../../hooks/useFollowing.ts";
 import { useTwitchIRC } from "../../hooks/useTwitchIRC.ts";
 import { StreamSidebar } from "../../components/StreamSidebar.tsx";
-import { Joined } from "../../components//Joined/Joined.tsx";
+import { TwitchViewer } from "../../components/TwitchViewer/TwitchViewer.tsx";
 import { useState } from "react";
 import { Stream } from "../../lib/twitch_api/twitch_api_types.ts";
 import "./InteractivePlayer.css";
@@ -12,7 +12,7 @@ export function InteractivePlayer() {
   const [joined, setJoined] = useState<Set<Stream>>(new Set());
   console.log({ connState });
   return (
-    <div className="flex h-fill bg-zinc-900 overflow-hidden">
+    <div className="flex h-screen bg-zinc-900 overflow-hidden">
       <StreamSidebar
         streams={following ?? []}
         onClick={(stream) => {
@@ -34,7 +34,7 @@ export function InteractivePlayer() {
             <div className="joined-list">
               {Array.from(joined).map((stream) => (
                 <div key={stream.id} className="joined-item">
-                  <Joined
+                  <TwitchViewer
                     stream={stream}
                     twitchIRC={twitchIRC}
                     connectionState={connState}

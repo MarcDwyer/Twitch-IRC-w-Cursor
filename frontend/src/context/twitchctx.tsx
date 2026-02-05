@@ -55,7 +55,7 @@ export const TwitchProvider = ({
     const lsClientID = localStorage.getItem(CLIENT_ID_KEY);
     const lsToken = localStorage.getItem(OAUTH_KEY);
     if (lsClientID && !clientID) _setClientID(lsClientID);
-    if (lsToken && !lsToken) _setOAuth({ ...oauth, token: lsToken });
+    if (lsToken && !oauth.token) _setOAuth({ ...oauth, token: lsToken });
   }, [_setClientID, _setOAuth, clientID, oauth]);
   return (
     <TwitchContext.Provider
