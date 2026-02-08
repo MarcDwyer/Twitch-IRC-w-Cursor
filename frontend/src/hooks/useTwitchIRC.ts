@@ -1,46 +1,59 @@
-import { useEffect, useState } from "react";
-import { TwitchIRC } from "../lib/irc/irc.ts";
+import { useCallback, useEffect, useState } from "react";
 import { useTwitchCtx } from "../context/twitchctx.tsx";
+import { handleMessage } from "../util/handleMessage.ts";
 
 export type IRCConnectionState = "disconnected" | "pending" | "authenticated";
 
-export function useTwitchIRC(): [TwitchIRC | null, IRCConnectionState] {
-  const [twitchIRC, setTwitchIRC] = useState<TwitchIRC | null>(null);
-  const [connectionState, setConnectionState] = useState<IRCConnectionState>(
-    "disconnected",
-  );
-
+export function useTwitchIRC() {
+  const [ws, setWs] = useState<WebSocket | null>(null);
+  const [status, setStatus] = useState<IRCConnectionState>("disconnected");
   const { oauth, twitchAPI } = useTwitchCtx();
 
-  useEffect(() => {
-    if (
-      !twitchIRC && oauth.validated && oauth.token && twitchAPI
-    ) {
-      const irc = new TwitchIRC(oauth.token, twitchAPI.userInfo.login);
-      setTwitchIRC(irc);
-    }
-  }, [oauth, twitchAPI, twitchIRC]);
+  const connect = useCallback(() => {
+    const tmpWs = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
 
-  useEffect(() => {
-    if (!twitchIRC) return;
-    (async () => {
-      try {
-        setConnectionState("pending");
-        await twitchIRC.connect();
-        setConnectionState("authenticated");
-      } catch (err) {
-        console.error(err);
+    tmpWs.onopen = () => {
+      if (!oauth.token || !twitchAPI) {
+        throw new Error("No token or twitchAPI not created");
       }
-    })();
-
-    return function () {
-      console.log("RAN RAN RAN");
-      if (twitchIRC) {
-        console.log("disconnected");
-        twitchIRC.disconnect();
+      if (status !== "disconnected") {
+        return;
       }
+      setStatus("pending");
+      tmpWs.send(`PASS oauth:${oauth.token}`);
+      tmpWs.send(`NICK ${twitchAPI?.userInfo.login}`);
+      setWs(tmpWs);
     };
-  }, [twitchIRC]);
+  }, [setWs, oauth, twitchAPI, status, setStatus]);
 
-  return [twitchIRC, connectionState];
+  useEffect(() => {
+    if (!ws) {
+      return;
+    }
+    ws.addEventListener("message", ({ data }: MessageEvent<string>) =>
+      handleMessage(data, {
+        "001": () => setStatus("authenticated"),
+        PING: () => ws.send("PONG :tmi.twitch.tv"),
+      }),
+    );
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+
+    ws.onclose = (err) => {
+      console.log("IRC:", { err });
+      console.log("Disconnected from Twitch IRC");
+    };
+  }, [ws]);
+
+  useEffect(() => {
+    if (!ws) connect();
+  }, [ws, connect]);
+  console.log({ status });
+  return {
+    connect,
+    status,
+    ws,
+  };
 }

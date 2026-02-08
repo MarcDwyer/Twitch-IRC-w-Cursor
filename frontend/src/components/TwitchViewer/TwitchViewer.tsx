@@ -1,66 +1,20 @@
-import { useEffect, useState } from "react";
-import { IRCConnectionState } from "../../hooks/useTwitchIRC.ts";
-import { TwitchIRC } from "../../lib/irc/irc.ts";
 import { Stream } from "../../lib/twitch_api/twitch_api_types.ts";
-import { Channel, ChatMessageEvent } from "../../lib/irc/channel.ts";
-import { Chat } from "../Chat.tsx";
-import { useTwitchAPI } from "../../hooks/useTwitchAPI.ts";
-
-import "./TwitchViewer.css";
+import { Chat } from "./Chat.tsx";
+import { useMemo } from "react";
 
 type Props = {
   stream: Stream;
-  twitchIRC: TwitchIRC | null;
-  connectionState: IRCConnectionState;
-  close: (stream: Stream) => void;
+  ws: WebSocket | null;
+  part: (stream: Stream, channel: string) => void;
 };
 
-export function TwitchViewer(
-  { stream, twitchIRC, connectionState, close }: Props,
-) {
-  const [messages, setMessages] = useState<ChatMessageEvent[]>([]);
-  const [channel, setChannel] = useState<Channel | null>(null);
-  const twitchAPI = useTwitchAPI();
+export function TwitchViewer({ stream, part, ws }: Props) {
+  const channel = useMemo(() => `#${stream.user_login}`, [stream]);
 
-  const embedUrl =
-    `https://player.twitch.tv/?channel=${stream.user_login}&parent=${location.hostname}`;
-
-  const addMsg = (msg: string) => {
-    const msgEvt: ChatMessageEvent = {
-      username: twitchAPI?.userInfo.display_name ?? "",
-      content: msg,
-      channel: channel?.name ?? "",
-    };
-    setMessages([...messages, msgEvt]);
-  };
-
-  useEffect(() => {
-    if (!channel && connectionState === "authenticated" && twitchIRC) {
-      twitchIRC.join(stream.user_login);
-      twitchIRC.addEventListener("onjoin", ({ channel }) => {
-        setChannel(channel);
-      });
-    }
-  }, [connectionState, twitchIRC, setChannel, channel]);
-
-  useEffect(() => {
-    if (channel) {
-      channel.setEventListener("PRIVMSG", (msg) => {
-        setMessages([...messages, msg]);
-      });
-    }
-  }, [channel, messages, setMessages]);
-
-  useEffect(() => {
-    return function () {
-      if (channel) {
-        channel.part();
-      }
-    };
-  }, [channel]);
+  const embedUrl = `https://player.twitch.tv/?channel=${stream.user_login}&parent=${location.hostname}`;
 
   return (
-    <div className="twitch-viewer-container bg-zinc-800 rounded-lg border border-zinc-700">
+    <div className="flex flex-col h-full w-full bg-zinc-800 rounded-lg border border-zinc-700 overflow-hidden">
       <div className="relative w-full aspect-video">
         <iframe
           src={embedUrl}
@@ -70,7 +24,7 @@ export function TwitchViewer(
         />
         <button
           type="button"
-          onClick={() => close(stream)}
+          onClick={() => part(stream, channel)}
           className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded p-1 transition-colors cursor-pointer"
         >
           <svg
@@ -95,9 +49,7 @@ export function TwitchViewer(
           </span>
           <span className="text-zinc-400 text-xs">{stream.game_name}</span>
         </div>
-        {channel && (
-          <Chat messages={messages} channel={channel} addMsg={addMsg} />
-        )}
+        {ws && <Chat ws={ws} channel={channel} />}
       </div>
     </div>
   );

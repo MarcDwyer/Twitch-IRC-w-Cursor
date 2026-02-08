@@ -77,7 +77,8 @@ export class TwitchIRC {
         reject(error);
       };
 
-      this.ws.onclose = () => {
+      this.ws.onclose = (err) => {
+        console.log("IRC:", { err });
         console.log("Disconnected from Twitch IRC");
       };
     });
@@ -91,7 +92,7 @@ export class TwitchIRC {
   }
 
   private handleMessage(data: string, ws: WebSocket): void {
-    if (data.startsWith("PING")) {
+    if (data.includes("PING")) {
       ws.send("PONG :tmi.twitch.tv");
       return;
     }
@@ -121,6 +122,7 @@ export class TwitchIRC {
       );
       if (match) {
         const [, username, channelName, content] = match;
+        console.log({ content });
         const channel = this.channels.get(channelName);
         if (channel) {
           channel.dispatchEvent("PRIVMSG", {

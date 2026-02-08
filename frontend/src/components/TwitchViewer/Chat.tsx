@@ -1,33 +1,31 @@
 import { useState } from "react";
-import { Channel, ChatMessageEvent } from "../lib/irc/channel.ts";
+import { useChat } from "../../hooks/useChat.ts";
 
 type Props = {
-  messages: ChatMessageEvent[];
-  channel: Channel;
-  addMsg: (msg: string) => void;
+  ws: WebSocket;
+  channel: string;
 };
 
-export function Chat({ messages, channel, addMsg }: Props) {
+export function Chat({ ws, channel }: Props) {
   const [input, setInput] = useState("");
-
+  const { messages, send } = useChat(ws, channel);
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto min-h-0 px-3 py-2 space-y-1 scrollbar-hide">
+    <div className="flex flex-col h-full overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0 px-3 py-2 space-y-1">
         {messages.map((msg, i) => (
           <div key={i} className="text-sm">
             <span className="text-purple-400 font-semibold">
               {msg.username}
             </span>
             <span className="text-zinc-500">:</span>
-            <span className="text-zinc-300">{msg.content}</span>
+            <span className="text-zinc-300">{msg.message}</span>
           </div>
         ))}
       </div>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          channel.send(input);
-          addMsg(input);
+          send(input);
           setInput("");
         }}
         className="px-3 py-2 border-t border-zinc-700"

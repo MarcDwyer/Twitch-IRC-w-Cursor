@@ -13,7 +13,6 @@ export const useOAuth = () => {
   };
 
   const validateToken = async () => {
-    console.log({ oauth });
     if (!oauth.token) {
       return;
     }

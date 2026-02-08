@@ -15,6 +15,5 @@ export function useTwitchAPI() {
       createTwitchAPI(clientID, token).then((api) => _setTwitchAPI(api));
     }
   }, [clientID, token, _setTwitchAPI, twitchAPI]);
-
   return twitchAPI;
 }
