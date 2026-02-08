@@ -18,8 +18,9 @@ export function useTwitchIRC() {
       }
 
       setStatus("pending");
+      tmpWs.send("CAP REQ :twitch.tv/tags");
       tmpWs.send(`PASS oauth:${oauth.token}`);
-      tmpWs.send(`NICK ${twitchAPI?.userInfo.login}`);
+      tmpWs.send(`NICK ${twitchAPI.userInfo.login}`);
       setWs(tmpWs);
     };
   }, [setWs, oauth, twitchAPI, setStatus]);

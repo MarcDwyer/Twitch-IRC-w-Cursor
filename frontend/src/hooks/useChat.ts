@@ -18,7 +18,6 @@ export function useChat(ws: WebSocket, channel: string) {
       };
       setMessages([...messages, privMsg]);
       if (broadcast) {
-        console.log(`PRIVMSG #${userInfo.login} :${msg}`, ws);
         ws.send(`PRIVMSG ${channel} :${msg}`);
       }
     },

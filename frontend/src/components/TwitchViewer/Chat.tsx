@@ -21,7 +21,6 @@ export function Chat({ ws, channel, broadcastHandlers }: Props) {
     broadcastHandlers.current.push(funcRef);
     return function () {
       const index = broadcastHandlers.current.indexOf(funcRef);
-      console.log({ index });
       if (index !== -1) broadcastHandlers.current.splice(index, 1);
     };
   }, [send]);
@@ -46,7 +45,7 @@ export function Chat({ ws, channel, broadcastHandlers }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col flex-1 min-h-0 relative">
       <div
         ref={chatRef}
         onScroll={handleScroll}
@@ -59,7 +58,10 @@ export function Chat({ ws, channel, broadcastHandlers }: Props) {
               key={i}
               className={`text-sm ${mentioned ? "bg-purple-500/20 border-l-2 border-purple-500 pl-2 -ml-2" : ""}`}
             >
-              <span className="text-purple-400 font-semibold">
+              <span
+                className="font-semibold"
+                style={{ color: msg.color || "#a78bfa" }}
+              >
                 {msg.username}
               </span>
               <span className="text-zinc-500">: </span>

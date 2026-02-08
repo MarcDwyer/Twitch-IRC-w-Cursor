@@ -2,6 +2,7 @@ export type PrivMsgEvt = {
   message: string;
   username: string;
   channel: string;
+  color?: string;
 };
 
 export type HandleMsgCallbacks = {
@@ -12,9 +13,24 @@ export type HandleMsgCallbacks = {
   PING?: () => void;
 };
 
+function parseTags(tagStr: string): Record<string, string> {
+  const tags: Record<string, string> = {};
+  for (const part of tagStr.split(";")) {
+    const eq = part.indexOf("=");
+    if (eq !== -1) {
+      tags[part.slice(0, eq)] = part.slice(eq + 1);
+    }
+  }
+  return tags;
+}
+
 export function getCommand(line: string): keyof HandleMsgCallbacks {
   if (line.startsWith("PING")) return "PING";
-  return line.split(" ")[1] as keyof HandleMsgCallbacks;
+  // With tags: @tags :user COMMAND ...  — command is at index 2
+  // Without tags: :user COMMAND ...     — command is at index 1
+  const parts = line.split(" ");
+  if (parts[0].startsWith("@")) return parts[2] as keyof HandleMsgCallbacks;
+  return parts[1] as keyof HandleMsgCallbacks;
 }
 
 export function handleMessage(
@@ -30,15 +46,17 @@ export function handleMessage(
     }
     switch (command) {
       case "PRIVMSG": {
-        const match = data.match(
-          /:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG (#\w+) :(.+)/,
+        const match = line.match(
+          /(?:@(\S+) )?:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG (#\w+) :(.+)/,
         );
         if (match) {
-          const [, username, channel, message] = match;
+          const [, tagStr, username, channel, message] = match;
+          const tags = tagStr ? parseTags(tagStr) : {};
           const msg: PrivMsgEvt = {
-            username,
+            username: tags["display-name"] || username,
             message,
             channel,
+            color: tags["color"] || undefined,
           };
           cbs.PRIVMSG?.(msg);
         }
@@ -46,8 +64,8 @@ export function handleMessage(
       }
       case "JOIN":
         {
-          const match = data.match(
-            /:(\w+)!\w+@\w+\.tmi\.twitch\.tv JOIN (#\w+)/,
+          const match = line.match(
+            /(?:@\S+ )?:(\w+)!\w+@\w+\.tmi\.twitch\.tv JOIN (#\w+)/,
           );
           if (match) {
             const [, , channelName] = match;
