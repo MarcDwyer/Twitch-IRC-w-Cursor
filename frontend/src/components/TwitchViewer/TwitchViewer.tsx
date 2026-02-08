@@ -1,4 +1,5 @@
 import { Stream } from "../../lib/twitch_api/twitch_api_types.ts";
+import { BroadcastHandler } from "../../pages/Dashboard/Dashboard.tsx";
 import { Chat } from "./Chat.tsx";
 import { useMemo } from "react";
 
@@ -6,9 +7,10 @@ type Props = {
   stream: Stream;
   ws: WebSocket | null;
   part: (stream: Stream, channel: string) => void;
+  broadcastHandlers: React.RefObject<BroadcastHandler[]>;
 };
 
-export function TwitchViewer({ stream, part, ws }: Props) {
+export function TwitchViewer({ stream, part, ws, broadcastHandlers }: Props) {
   const channel = useMemo(() => `#${stream.user_login}`, [stream]);
 
   const embedUrl = `https://player.twitch.tv/?channel=${stream.user_login}&parent=${location.hostname}`;
@@ -49,7 +51,9 @@ export function TwitchViewer({ stream, part, ws }: Props) {
           </span>
           <span className="text-zinc-400 text-xs">{stream.game_name}</span>
         </div>
-        {ws && <Chat ws={ws} channel={channel} />}
+        {ws && (
+          <Chat ws={ws} channel={channel} broadcastHandlers={broadcastHandlers} />
+        )}
       </div>
     </div>
   );

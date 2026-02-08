@@ -28,15 +28,13 @@ export function handleMessage(
     if (!cbs[command]) {
       continue;
     }
-    console.log({ command });
     switch (command) {
       case "PRIVMSG": {
         const match = data.match(
           /:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG (#\w+) :(.+)/,
         );
         if (match) {
-          const [one, username, channel, message] = match;
-          console.log({ channel, one });
+          const [, username, channel, message] = match;
           const msg: PrivMsgEvt = {
             username,
             message,
@@ -52,7 +50,7 @@ export function handleMessage(
             /:(\w+)!\w+@\w+\.tmi\.twitch\.tv JOIN (#\w+)/,
           );
           if (match) {
-            const [, __, channelName] = match;
+            const [, , channelName] = match;
 
             cbs[command](channelName);
           }

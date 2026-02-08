@@ -8,7 +8,7 @@ export function useChat(ws: WebSocket, channel: string) {
   const userInfo = useUserInfo();
 
   const send = useCallback(
-    (msg: string) => {
+    (msg: string, broadcast: boolean) => {
       if (!userInfo || !ws) return;
 
       const privMsg: PrivMsgEvt = {
@@ -17,11 +17,13 @@ export function useChat(ws: WebSocket, channel: string) {
         channel,
       };
       setMessages([...messages, privMsg]);
-      ws.send(`PRIVMSG ${userInfo.login} :${msg}`);
+      if (broadcast) {
+        console.log(`PRIVMSG #${userInfo.login} :${msg}`, ws);
+        ws.send(`PRIVMSG ${channel} :${msg}`);
+      }
     },
-    [setMessages],
+    [setMessages, ws, userInfo, messages, channel],
   );
-
   useEffect(() => {
     const ref = ({ data }: MessageEvent<string>) =>
       handleMessage(data, {
@@ -43,12 +45,23 @@ export function useChat(ws: WebSocket, channel: string) {
     if (!joined) {
       ws.send(`Join ${channel}`);
     }
-  }, [joined, ws, channel]);
+  }, [joined, ws, channel, setJoined]);
+
+  const isMentioned = useCallback(
+    (msg: PrivMsgEvt) => {
+      if (!userInfo) return false;
+      return msg.message
+        .toLowerCase()
+        .includes(userInfo.display_name.toLowerCase());
+    },
+    [userInfo],
+  );
 
   return {
     channel,
     messages,
     joined,
     send,
+    isMentioned,
   };
 }
